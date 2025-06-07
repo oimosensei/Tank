@@ -1,5 +1,6 @@
 using Cysharp.Runtime.Multicast;
 using System.Collections.Concurrent;
+using UnityEngine;
 
 public class GameContext : IDisposable
 {
@@ -7,6 +8,7 @@ public class GameContext : IDisposable
     public bool IsCompleted { get; set; }
     // public ConcurrentQueue<ICommand> CommandQueue { get; } = new();
     public IMulticastSyncGroup<Guid, IGameHubReceiver> Group { get; }
+    public ConcurrentDictionary<Guid, TankInfo> TankInfos { get; } = new();
 
     public GameContext(IMulticastGroupProvider groupProvider)
     {

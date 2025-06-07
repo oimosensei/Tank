@@ -1,254 +1,196 @@
 using UnityEngine;
-using System;
+using System; // Guid のために必要
+using System.Collections.Generic; // Dictionary のために必要
 using System.Threading.Tasks;
-using System.Collections.Generic; // For Queue
-using Grpc.Core; // For ChannelOption, ChannelCredentials if needed
-using MagicOnion.Client;
+using Grpc.Core;
 using Grpc.Net.Client;
+using MagicOnion.Client;
+using Nakatani;
 using MagicOnion;
+using Cysharp.Threading.Tasks;
 
-// Receiver class: Implements methods called by the server
-public class GameHubReceiver : IGameHubReceiver
+
+// --- Unity で動作する実装クラス ---
+public class GameHubClient : MonoBehaviour, IGameHubReceiver
 {
-    // Action to enqueue UI updates to be run on the main thread
-    private readonly Action<Action> _enqueueMainThreadAction;
+    private GrpcChannelx channel;
+    private IGameHub hubClient;
+    private Guid myConnectionId;
 
-    public GameHubReceiver(Action<Action> enqueueMainThreadAction)
+    async UniTaskVoid Start()
     {
-        _enqueueMainThreadAction = enqueueMainThreadAction;
+        channel = GrpcChannelx.ForAddress("http://localhost:5127");
+        hubClient = await StreamingHubClient.ConnectAsync<IGameHub, IGameHubReceiver>(
+            channel, this);
+
+        Debug.Log("Connected to GameHub server");
+        float randomX = UnityEngine.Random.Range(-10f, 10f);
+        float randomZ = UnityEngine.Random.Range(-10f, 10f);
+
+        var (existingTanks, connectionId) = await hubClient.JoinAndSpawnAsync(new Vector3(randomX, 0, randomZ));
+        myConnectionId = connectionId;
+
+        // Spawn all existing tanks
+        if (Nakatani.TankManager.Instance != null)
+        {
+            foreach (var tankInfo in existingTanks)
+            {
+                if (tankInfo.Id != System.Guid.Empty) // Skip empty guid
+                {
+                    Debug.Log($"Spawning existing tank: {tankInfo.Id} at {tankInfo.Position} with rotation {tankInfo.Rotation}");
+                    Nakatani.TankManager.Instance.SpawnTank(tankInfo.Id, tankInfo.Position, tankInfo.Rotation, false, 1);
+                }
+            }
+        }
     }
+
+    public void MoveTank(Vector3 position, Quaternion rotation)
+    {
+        hubClient.MoveAsync(myConnectionId, position, rotation);
+    }
+
+    private async void OnDestroy()
+    {
+        if (hubClient != null)
+        {
+            await hubClient.DisposeAsync();
+        }
+        if (channel != null)
+        {
+            await channel.ShutdownAsync();
+        }
+    }
+
+    // シングルトンインスタンス (必要に応じて)
+    public static GameHubClient Instance { get; private set; }
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            // DontDestroyOnLoad(gameObject); // シーンをまたいで存在させたい場合
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    // MagicOnionのクライアントセットアップ時に、このインスタンスをレシーバーとして登録する必要があります。
+    // 例: hubClient.Register(this); のような形
 
     public void OnAttack(Guid playerId, Guid targetId)
     {
-        _enqueueMainThreadAction(() =>
+        Debug.Log($"[GameHubClient] OnAttack: Player {playerId} attacked Target {targetId}");
+
+        GameObject attackerTank = Nakatani.TankManager.Instance?.GetTank(playerId);
+        if (attackerTank != null)
         {
-            Debug.Log($"[Receiver] Player {playerId} attacked target {targetId}");
-            // TODO: Update game state or UI based on this attack
-        });
-    }
-
-    public void OnMove(Guid playerId, int x, int y)
-    {
-        _enqueueMainThreadAction(() =>
+            // 攻撃者のアニメーションやエフェクトを再生
+            // 例: attackerTank.GetComponent<TankShootingController>()?.PlayAttackAnimation();
+            Debug.Log($"Attacker tank {playerId} found. Playing attack animation/effect.");
+        }
+        else
         {
-            Debug.Log($"[Receiver] Player {playerId} moved to ({x}, {y})");
-            // TODO: Update character position or UI
-        });
-    }
-
-    public void OnPlayerJoined(string playerName, Guid playerId)
-    {
-        _enqueueMainThreadAction(() =>
-        {
-            Debug.Log($"[Receiver] Player {playerName} (ID: {playerId}) joined the game.");
-            // TODO: Add player to scene, update player list UI
-        });
-    }
-
-    public void OnPlayerLeft(string playerName, Guid playerId)
-    {
-        _enqueueMainThreadAction(() =>
-        {
-            Debug.Log($"[Receiver] Player {playerName} (ID: {playerId}) left the game.");
-            // TODO: Remove player from scene, update player list UI
-        });
-    }
-    public void OnNotification(string message)
-    {
-        _enqueueMainThreadAction(() =>
-        {
-            Debug.Log($"[Receiver] Notification: {message}");
-            // TODO: Display notification
-        });
-    }
-}
-
-public class GameHubClient : MonoBehaviour
-{
-    [Header("Server Connection")]
-    [SerializeField] private string serverAddress = "localhost:5217"; // For gRPC, usually just host:port
-
-    [Header("Player Info")]
-    [SerializeField] private string playerName = "UnityPlayer";
-
-    private GrpcChannelx _channel; // Grpc.Core.Channel or Grpc.Net.Client.GrpcChannel
-    private IGameHub _hubClient;
-    private GameHubReceiver _receiver;
-
-    // Queue for actions to be executed on the main thread
-    private readonly Queue<Action> _mainThreadActions = new Queue<Action>();
-
-    void Awake()
-    {
-        // Initialize receiver, passing a lambda to enqueue actions
-        _receiver = new GameHubReceiver(action =>
-        {
-            lock (_mainThreadActions)
-            {
-                _mainThreadActions.Enqueue(action);
-            }
-        });
-    }
-
-    async void Start()
-    {
-        await ConnectToServerAsync();
-    }
-
-    void Update()
-    {
-        // Process any actions queued from background threads (like receiver methods)
-        lock (_mainThreadActions)
-        {
-            while (_mainThreadActions.Count > 0)
-            {
-                _mainThreadActions.Dequeue()?.Invoke();
-            }
+            Debug.LogWarning($"Attacker tank {playerId} not found for OnAttack.");
         }
 
-        // --- Example Input for testing ---
-        if (_hubClient != null)
+        GameObject targetTank = Nakatani.TankManager.Instance?.GetTank(targetId);
+        if (targetTank != null)
         {
-            if (Input.GetKeyDown(KeyCode.A))
-            {
-                Debug.Log("Sending Attack command...");
-                // Create a dummy target ID for testing
-                _ = SendAttackAsync(Guid.NewGuid()); // Fire and forget for this example
-            }
-            if (Input.GetKeyDown(KeyCode.M))
-            {
-                int randX = UnityEngine.Random.Range(-10, 11);
-                int randY = UnityEngine.Random.Range(-10, 11);
-                Debug.Log($"Sending Move command to ({randX}, {randY})...");
-                _ = SendMoveAsync(randX, randY); // Fire and forget
-            }
+            // 被弾者のアニメーションやエフェクト、ダメージ処理など
+            // 例: targetTank.GetComponent<TankHealth>()?.TakeDamage(10);
+            Debug.Log($"Target tank {targetId} found. Applying damage/effect.");
+        }
+        else
+        {
+            Debug.LogWarning($"Target tank {targetId} not found for OnAttack.");
+        }
+        // TODO: 攻撃エフェクトの生成やサウンド再生などをここに追加
+    }
+
+    public void OnMove(Guid playerId, Vector3 position, Quaternion rotation)
+    {
+        Debug.Log($"[GameHubClient] OnMove: Player {playerId} moved to {position} with rotation {rotation}");
+
+        if (Nakatani.TankManager.Instance != null)
+        {
+            Nakatani.TankManager.Instance.OnTankMove(playerId, position, rotation);
+        }
+        else
+        {
+            Debug.LogError("Nakatani.TankManager.Instance is null in OnMove");
         }
     }
 
-    public async Task ConnectToServerAsync()
+    public void OnPlayerJoined(Guid playerId, Vector3 position, bool isSelf)
     {
-        if (_hubClient != null)
+        Debug.Log($"[GameHubClient] OnPlayerJoined: Player {playerId} at {position}, IsSelf: {isSelf}");
+
+        if (Nakatani.TankManager.Instance != null)
         {
-            Debug.Log("Already connected or connecting.");
-            return;
+            // 1 is a default player number, can be modified as needed
+            Nakatani.TankManager.Instance.SpawnTank(playerId, position, isSelf, 1);
         }
-
-        Debug.Log($"Attempting to connect to {serverAddress}...");
-        try
+        else
         {
-            // For Grpc.Core (typically used in Unity)
-            // For HTTP (non-TLS):
-            _channel = GrpcChannelx.ForAddress("http://" + serverAddress); // Or "https://";
-            // For HTTPS (TLS):
-            // var credentials = new SslCredentials(); // Or load from file if you have custom certs
-            // _channel = new Channel(serverAddress, credentials);
-
-            // For Grpc.Net.Client (if you are sure your target platform supports it well with MagicOnion)
-            // _channel = GrpcChannelx.ForAddress("http://" + serverAddress); // Or "https://"
-
-            // Connect to the StreamingHub
-            // The _receiver instance is passed to handle messages from the server
-            _hubClient = await StreamingHubClient.ConnectAsync<IGameHub, IGameHubReceiver>(_channel, _receiver);
-
-            Debug.Log("Successfully connected to GameHub!");
-
-            // Join the game after connecting
-            //TODO
-            // await _hubClient.JoinAsync(playerName);
-            Debug.Log($"Sent Join request as {playerName}.");
-
+            Debug.LogError("Nakatani.TankManager.Instance is null in OnPlayerJoined");
         }
-        catch (Exception e)
+    }
+
+    public void OnPlayerLeft(Guid playerId)
+    {
+        Debug.Log($"[GameHubClient] OnPlayerLeft: Player {playerId}");
+        if (Nakatani.TankManager.Instance != null)
         {
-            Debug.LogError($"Failed to connect to GameHub: {e.GetType().Name} - {e.Message}");
-            Debug.LogException(e);
-            _hubClient = null;
-            if (_channel != null)
+            Nakatani.TankManager.Instance.DestroyTank(playerId);
+        }
+        else
+        {
+            Debug.LogError("Nakatani.TankManager.Instance is null in OnPlayerLeft");
+        }
+    }
+
+    // Helper method to test movement
+    public async void TestMove(Vector3 position, Quaternion rotation)
+    {
+        if (hubClient != null)
+        {
+            await hubClient.MoveAsync(myConnectionId, position, rotation);
+            Debug.Log($"Sent move command to position: {position} with rotation: {rotation}");
+        }
+        else
+        {
+            Debug.LogError("Hub client is not connected");
+        }
+    }
+
+    // Helper method to join the game
+    public async void JoinGame(Vector3 spawnPosition)
+    {
+        if (hubClient != null)
+        {
+            var (existingTanks, connectionId) = await hubClient.JoinAndSpawnAsync(spawnPosition);
+            myConnectionId = connectionId;
+            Debug.Log($"Joined game at position: {spawnPosition}");
+
+            // Spawn all existing tanks
+            if (Nakatani.TankManager.Instance != null)
             {
-                await _channel.ShutdownAsync();
-                _channel = null;
+                foreach (var tankInfo in existingTanks)
+                {
+                    if (tankInfo.Id != System.Guid.Empty) // Skip empty guid
+                    {
+                        Debug.Log($"Spawning existing tank: {tankInfo.Id} at {tankInfo.Position} with rotation {tankInfo.Rotation}");
+                        Nakatani.TankManager.Instance.SpawnTank(tankInfo.Id, tankInfo.Position, tankInfo.Rotation, false, 1);
+                    }
+                }
             }
         }
-    }
-
-    public async Task SendAttackAsync(Guid targetId)
-    {
-        if (_hubClient == null)
+        else
         {
-            Debug.LogWarning("Not connected to server. Cannot send Attack.");
-            return;
-        }
-        try
-        {
-            await _hubClient.AttackAsync(targetId);
-            Debug.Log($"AttackAsync called for target {targetId}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error sending Attack: {e.Message}");
-            // Handle potential disconnection or other errors
+            Debug.LogError("Hub client is not connected");
         }
     }
 
-    public async Task SendMoveAsync(int x, int y)
-    {
-        if (_hubClient == null)
-        {
-            Debug.LogWarning("Not connected to server. Cannot send Move.");
-            return;
-        }
-        try
-        {
-            await _hubClient.MoveAsync(x, y);
-            Debug.Log($"MoveAsync called to ({x}, {y})");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error sending Move: {e.Message}");
-        }
-    }
-
-    async void OnDestroy()
-    {
-        await DisconnectAsync();
-    }
-
-    async void OnApplicationQuit()
-    {
-        await DisconnectAsync();
-    }
-
-    public async Task DisconnectAsync()
-    {
-        if (_hubClient != null)
-        {
-            Debug.Log("Disconnecting from GameHub...");
-            try
-            {
-                //TODO
-                // await _hubClient.LeaveAsync(); // Gracefully leave
-                await _hubClient.DisposeAsync(); // Dispose the client-side hub
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error during hub disposal: {e.Message}");
-            }
-            _hubClient = null;
-        }
-
-        if (_channel != null)
-        {
-            Debug.Log("Shutting down gRPC channel...");
-            try
-            {
-                await _channel.ShutdownAsync();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error during channel shutdown: {e.Message}");
-            }
-            _channel = null;
-        }
-        Debug.Log("Disconnected.");
-    }
 }
