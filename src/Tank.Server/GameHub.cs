@@ -65,4 +65,51 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         gameContext?.Group.Except([ConnectionId]).OnMove(playerId, position, rotation);
         return default;
     }
+
+    public ValueTask ShootAsync(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce)
+    {
+        var shellId = Guid.NewGuid();
+        var shellInfo = new ShellInfo
+        {
+            Id = shellId,
+            ShooterId = this.ConnectionId,
+            Position = firePosition,
+            Velocity = velocity,
+            Rotation = rotation,
+            LaunchForce = launchForce,
+            Timestamp = (float)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds
+        };
+
+        gameContext?.ShellInfos.TryAdd(shellId, shellInfo);
+        gameContext?.Group.All.OnShellFired(shellInfo);
+        
+        Console.WriteLine($"Shell fired by {this.ConnectionId}: {shellId} at {firePosition} with velocity {velocity}");
+        return default;
+    }
+
+    public ValueTask ShellUpdateAsync(Guid shellId, Vector3 position, Vector3 velocity)
+    {
+        if (gameContext?.ShellInfos.TryGetValue(shellId, out var shellInfo) == true)
+        {
+            shellInfo.Position = position;
+            shellInfo.Velocity = velocity;
+            shellInfo.Timestamp = (float)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
+        }
+        
+        gameContext?.Group.All.OnShellUpdate(shellId, position, velocity);
+        return default;
+    }
+
+    public ValueTask ShellExplodeAsync(Guid shellId, Vector3 explosionPosition)
+    {
+        var shooterId = Guid.Empty;
+        if (gameContext?.ShellInfos.TryRemove(shellId, out var shellInfo) == true)
+        {
+            shooterId = shellInfo.ShooterId;
+        }
+        
+        gameContext?.Group.All.OnShellExplode(shellId, explosionPosition, shooterId);
+        Console.WriteLine($"Shell exploded: {shellId} at {explosionPosition}, shot by {shooterId}");
+        return default;
+    }
 }

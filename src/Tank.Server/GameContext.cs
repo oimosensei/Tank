@@ -9,6 +9,7 @@ public class GameContext : IDisposable
     // public ConcurrentQueue<ICommand> CommandQueue { get; } = new();
     public IMulticastSyncGroup<Guid, IGameHubReceiver> Group { get; }
     public ConcurrentDictionary<Guid, TankInfo> TankInfos { get; } = new();
+    public ConcurrentDictionary<Guid, ShellInfo> ShellInfos { get; } = new();
 
     public GameContext(IMulticastGroupProvider groupProvider)
     {

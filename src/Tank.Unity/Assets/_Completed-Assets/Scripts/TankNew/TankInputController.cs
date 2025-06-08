@@ -12,6 +12,7 @@ namespace Nakatani
 
         public void Initialize(TankModel model)
         {
+            //todo ここ、player1専用なのでもう意味ないが、、
             m_Model = model;
             m_MovementAxisName = "Vertical" + "1";
             m_TurnAxisName = "Horizontal" + "1";

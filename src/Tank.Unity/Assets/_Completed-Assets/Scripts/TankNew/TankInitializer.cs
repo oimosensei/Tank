@@ -31,14 +31,17 @@ namespace Nakatani
 
         public void Setup(bool isSelf)
         {
+            //networkから生成されたものかどうか
             this.isSelf = isSelf;
             // Modelを生成
             Model = new TankModel(m_PlayerNumber, m_PlayerColor, m_StartingHealth, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
+            Model.isSelf = isSelf;
             Model.Wins.Value = m_Wins;
             m_ColoredPlayerText = Model.ColoredPlayerText.Value; // 初期値を取得
             m_Instance = this.gameObject;
 
             // 各コンポーネントにModelを注入して初期化
+            // ここらへん、vcontainerとか使いたいが、、
             m_Instance.GetComponent<TankView>().Initialize(Model);
             m_Instance.GetComponent<TankInputController>().Initialize(Model);
             if (isSelf)

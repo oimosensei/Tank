@@ -151,7 +151,7 @@ namespace Nakatani
                 // 例: tank.GetComponent<TankMovementController>()?.SetTargetPosition(position, rotation);
                 tank.transform.position = position;
                 tank.transform.rotation = rotation;
-                Debug.Log($"Tank {playerId} moved to {position} with rotation {rotation}");
+                // Debug.Log($"Tank {playerId} moved to {position} with rotation {rotation}");
             }
             else
             {

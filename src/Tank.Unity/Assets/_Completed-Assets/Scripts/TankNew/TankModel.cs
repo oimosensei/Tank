@@ -93,6 +93,7 @@ namespace Nakatani
         public void HandleShootingInput(bool getButtonDown, bool getButton, bool getButtonUp)
         {
             if (!IsControlEnabled.Value) return;
+            if (!isSelf) return;
 
             // 最大までチャージされたら自動発射
             if (CurrentLaunchForce.Value >= m_MaxLaunchForce && !m_Fired)

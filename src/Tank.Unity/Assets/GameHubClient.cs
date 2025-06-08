@@ -49,6 +49,21 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         hubClient.MoveAsync(myConnectionId, position, rotation);
     }
 
+    public void ShootShell(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce)
+    {
+        hubClient.ShootAsync(firePosition, velocity, rotation, launchForce);
+    }
+
+    public void UpdateShell(Guid shellId, Vector3 position, Vector3 velocity)
+    {
+        hubClient.ShellUpdateAsync(shellId, position, velocity);
+    }
+
+    public void ExplodeShell(Guid shellId, Vector3 explosionPosition)
+    {
+        hubClient.ShellExplodeAsync(shellId, explosionPosition);
+    }
+
     private async void OnDestroy()
     {
         if (hubClient != null)
@@ -63,6 +78,9 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
 
     // シングルトンインスタンス (必要に応じて)
     public static GameHubClient Instance { get; private set; }
+
+    // 接続IDのgetter
+    public Guid MyConnectionId => myConnectionId;
     void Awake()
     {
         if (Instance == null)
@@ -111,7 +129,7 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
 
     public void OnMove(Guid playerId, Vector3 position, Quaternion rotation)
     {
-        Debug.Log($"[GameHubClient] OnMove: Player {playerId} moved to {position} with rotation {rotation}");
+        // Debug.Log($"[GameHubClient] OnMove: Player {playerId} moved to {position} with rotation {rotation}");
 
         if (Nakatani.TankManager.Instance != null)
         {
@@ -190,6 +208,49 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         else
         {
             Debug.LogError("Hub client is not connected");
+        }
+    }
+
+    // Shell event handlers
+    public void OnShellFired(ShellInfo shellInfo)
+    {
+        Debug.Log($"[GameHubClient] OnShellFired: Shell {shellInfo.Id} fired by {shellInfo.ShooterId} at {shellInfo.Position} with velocity {shellInfo.Velocity}");
+
+        if (Nakatani.ShellManager.Instance != null)
+        {
+            Nakatani.ShellManager.Instance.SpawnShell(shellInfo);
+        }
+        else
+        {
+            Debug.LogError("Nakatani.ShellManager.Instance is null in OnShellFired");
+        }
+    }
+
+    public void OnShellUpdate(Guid shellId, Vector3 position, Vector3 velocity)
+    {
+        Debug.Log($"[GameHubClient] OnShellUpdate: Shell {shellId} at {position} with velocity {velocity}");
+
+        if (Nakatani.ShellManager.Instance != null)
+        {
+            Nakatani.ShellManager.Instance.UpdateShell(shellId, position, velocity);
+        }
+        else
+        {
+            Debug.LogError("Nakatani.ShellManager.Instance is null in OnShellUpdate");
+        }
+    }
+
+    public void OnShellExplode(Guid shellId, Vector3 explosionPosition, Guid shooterId)
+    {
+        Debug.Log($"[GameHubClient] OnShellExplode: Shell {shellId} exploded at {explosionPosition}, shot by {shooterId}");
+
+        if (Nakatani.ShellManager.Instance != null)
+        {
+            Nakatani.ShellManager.Instance.ExplodeShell(shellId, explosionPosition, shooterId);
+        }
+        else
+        {
+            Debug.LogError("Nakatani.ShellManager.Instance is null in OnShellExplode");
         }
     }
 
