@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Nakatani
 {
-    // ネットワーク経由で受信した情報に基づいて、タンクの移動とエンジン音を制御するクラス
+    // ネットワーク経由で受信した情報に基づいて、タンクの移動と移動に伴うエンジン音を制御するクラス
     [RequireComponent(typeof(Rigidbody))]
     public class TankNetworkMovementController : MonoBehaviour // クラス名を変更しました
     {

@@ -21,10 +21,12 @@ namespace Nakatani
         private ParticleSystem m_ExplosionParticles;
         private AudioSource m_ExplosionAudio;
         private TankModel m_Model;
+        private TankInputController m_InputController;
 
         public void Initialize(TankModel model)
         {
             m_Model = model;
+            m_InputController = GetComponent<TankInputController>();
 
             // 爆発エフェクトを準備
             var explosionInstance = Instantiate(m_ExplosionPrefab);
@@ -39,10 +41,13 @@ namespace Nakatani
                 .Subscribe(health => SetHealthUI(health, m_Model.m_StartingHealth))
                 .AddTo(this);
 
-            // 照準UIの更新
-            m_Model.CurrentLaunchForce
-                .Subscribe(force => m_AimSlider.value = force)
-                .AddTo(this);
+            // 照準UIの更新（InputControllerから取得）
+            if (m_InputController != null)
+            {
+                m_InputController.CurrentLaunchForce
+                    .Subscribe(force => m_AimSlider.value = force)
+                    .AddTo(this);
+            }
 
             // タンクの色の設定
             m_Model.PlayerColor
@@ -67,8 +72,13 @@ namespace Nakatani
 
             // 初期UI設定
             m_HealthSlider.maxValue = m_Model.CurrentHealth.Value;
-            m_AimSlider.minValue = m_Model.m_MinLaunchForce;
-            m_AimSlider.maxValue = m_Model.m_MaxLaunchForce;
+            
+            // InputControllerから照準UIの設定を取得
+            if (m_InputController != null)
+            {
+                m_AimSlider.minValue = m_InputController.MinLaunchForce;
+                m_AimSlider.maxValue = m_InputController.MaxLaunchForce;
+            }
         }
 
         private void SetHealthUI(float current, float starting)

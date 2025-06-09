@@ -34,7 +34,7 @@ namespace Nakatani
             //networkから生成されたものかどうか
             this.isSelf = isSelf;
             // Modelを生成
-            Model = new TankModel(m_PlayerNumber, m_PlayerColor, m_StartingHealth, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
+            Model = new TankModel(m_PlayerNumber, m_PlayerColor, m_StartingHealth);
             Model.isSelf = isSelf;
             Model.Wins.Value = m_Wins;
             m_ColoredPlayerText = Model.ColoredPlayerText.Value; // 初期値を取得
@@ -43,10 +43,14 @@ namespace Nakatani
             // 各コンポーネントにModelを注入して初期化
             // ここらへん、vcontainerとか使いたいが、、
             m_Instance.GetComponent<TankView>().Initialize(Model);
-            m_Instance.GetComponent<TankInputController>().Initialize(Model);
+            
+            var inputController = m_Instance.GetComponent<TankInputController>();
+            inputController.Initialize(Model, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
+            
             if (isSelf)
             {
-                m_Instance.GetComponent<TankMovementController>().Initialize(Model);
+                var movementController = m_Instance.GetComponent<TankMovementController>();
+                movementController.Initialize(inputController); // InputControllerを渡すように修正
 
                 m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
             }
@@ -55,8 +59,8 @@ namespace Nakatani
                 m_Instance.GetComponent<TankNetworkMovementController>().Initialize(Model);
                 m_Instance.GetComponent<TankMovementController>().enabled = false;
             }
-            m_Instance.GetComponent<TankShootingController>().Initialize(Model);
-
+            
+            m_Instance.GetComponent<TankShootingController>().Initialize(inputController);
 
             // ModelのWinsプロパティを監視して、Managerのm_Winsを更新し続ける
             Model.Wins.Subscribe(wins => m_Wins = wins).AddTo(m_Instance);
@@ -83,6 +87,7 @@ namespace Nakatani
             m_Instance.SetActive(true);
 
             Model.Reset();
+            m_Instance.GetComponent<TankInputController>().Reset();
         }
     }
 }

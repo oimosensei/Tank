@@ -3,8 +3,7 @@ using UniRx;
 
 namespace Nakatani
 {
-    // Modelからの指示で、実際に砲弾を発射するクラス
-    // todo Inputからどのように指示が下るかの仕組み、リファクタリング候補
+    // InputControllerからの指示で、実際に砲弾を発射するクラス
     public class TankShootingController : MonoBehaviour
     {
         public Rigidbody m_Shell;
@@ -13,15 +12,15 @@ namespace Nakatani
         public AudioClip m_ChargingClip;
         public AudioClip m_FireClip;
 
-        public void Initialize(TankModel model)
+        public void Initialize(TankInputController inputController)
         {
-            // 発射イベントを購読して、砲弾を発射
-            model.OnFire
-                .Subscribe(_ => Fire(model.CurrentLaunchForce.Value))
+            // InputControllerの発射イベントを購読して、砲弾を発射
+            inputController.OnFire
+                .Subscribe(_ => Fire(inputController.CurrentLaunchForce.Value))
                 .AddTo(this);
 
-            // チャージ状態を購読して、チャージ音を再生
-            model.IsCharging
+            // InputControllerのチャージ状態を購読して、チャージ音を再生
+            inputController.IsCharging
                 .DistinctUntilChanged()
                 .Where(isCharging => isCharging)
                 .Subscribe(_ =>
