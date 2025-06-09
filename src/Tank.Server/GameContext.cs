@@ -23,6 +23,8 @@ public class GameContext : IDisposable
     }
 }
 
+//GameContextをGuidで複数個管理するクラス
+//Singletonで運用
 public class GameContextRepository
 {
     private readonly ConcurrentDictionary<Guid, GameContext> _contexts = new();
