@@ -21,12 +21,12 @@ namespace Nakatani
         private ParticleSystem m_ExplosionParticles;
         private AudioSource m_ExplosionAudio;
         private TankModel m_Model;
-        private TankInputController m_InputController;
+        private TankShootingController m_ShootingController;
 
         public void Initialize(TankModel model)
         {
             m_Model = model;
-            m_InputController = GetComponent<TankInputController>();
+            m_ShootingController = GetComponent<TankShootingController>();
 
             // 爆発エフェクトを準備
             var explosionInstance = Instantiate(m_ExplosionPrefab);
@@ -41,11 +41,14 @@ namespace Nakatani
                 .Subscribe(health => SetHealthUI(health, m_Model.m_StartingHealth))
                 .AddTo(this);
 
-            // 照準UIの更新（InputControllerから取得）
-            if (m_InputController != null)
+            // 照準UIの更新（ShootingControllerから取得）
+            if (m_ShootingController != null)
             {
-                m_InputController.CurrentLaunchForce
+                m_ShootingController.CurrentLaunchForce
                     .Subscribe(force => m_AimSlider.value = force)
+                    .AddTo(this);
+                m_ShootingController.CurrentLaunchForce
+                    .Subscribe(force => Debug.Log("currentforce: " + force.ToString()))
                     .AddTo(this);
             }
 
@@ -72,12 +75,12 @@ namespace Nakatani
 
             // 初期UI設定
             m_HealthSlider.maxValue = m_Model.CurrentHealth.Value;
-            
-            // InputControllerから照準UIの設定を取得
-            if (m_InputController != null)
+
+            // ShootingControllerから照準UIの設定を取得
+            if (m_ShootingController != null)
             {
-                m_AimSlider.minValue = m_InputController.MinLaunchForce;
-                m_AimSlider.maxValue = m_InputController.MaxLaunchForce;
+                m_AimSlider.minValue = m_ShootingController.MinLaunchForce;
+                m_AimSlider.maxValue = m_ShootingController.MaxLaunchForce;
             }
         }
 

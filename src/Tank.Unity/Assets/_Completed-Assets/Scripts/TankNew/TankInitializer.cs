@@ -42,15 +42,18 @@ namespace Nakatani
 
             // 各コンポーネントにModelを注入して初期化
             // ここらへん、vcontainerとか使いたいが、、
-            m_Instance.GetComponent<TankView>().Initialize(Model);
-            
+
             var inputController = m_Instance.GetComponent<TankInputController>();
-            inputController.Initialize(Model, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
-            
+            inputController.Initialize(Model);
+
+            var shootingController = m_Instance.GetComponent<TankShootingController>();
+            shootingController.Initialize(inputController, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
+
+            m_Instance.GetComponent<TankView>().Initialize(Model);
             if (isSelf)
             {
                 var movementController = m_Instance.GetComponent<TankMovementController>();
-                movementController.Initialize(inputController); // InputControllerを渡すように修正
+                movementController.Initialize(inputController);
 
                 m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
             }
@@ -59,8 +62,6 @@ namespace Nakatani
                 m_Instance.GetComponent<TankNetworkMovementController>().Initialize(Model);
                 m_Instance.GetComponent<TankMovementController>().enabled = false;
             }
-            
-            m_Instance.GetComponent<TankShootingController>().Initialize(inputController);
 
             // ModelのWinsプロパティを監視して、Managerのm_Winsを更新し続ける
             Model.Wins.Subscribe(wins => m_Wins = wins).AddTo(m_Instance);
@@ -88,6 +89,7 @@ namespace Nakatani
 
             Model.Reset();
             m_Instance.GetComponent<TankInputController>().Reset();
+            m_Instance.GetComponent<TankShootingController>().Reset();
         }
     }
 }
