@@ -19,6 +19,10 @@ namespace Nakatani
         private float m_OriginalPitch;
         private ParticleSystem[] m_particleSystems;
 
+        [SerializeField]
+        private Transform m_TurretTransform;
+        private Quaternion lastParentRotation; // 親オブジェクト（車体）の前フレームでの回転を保存
+
         public void Initialize(TankInputController inputController)
         {
             m_InputController = inputController;
@@ -69,6 +73,21 @@ namespace Nakatani
             var turn = inputValue * m_TurnSpeed * Time.deltaTime;
             var turnRotation = Quaternion.Euler(0f, turn, 0f);
             m_Rigidbody.MoveRotation(m_Rigidbody.rotation * turnRotation);
+        }
+
+        private void LateUpdate()
+        {
+            if (m_TurretTransform == null) return;
+            // 1. 親が今フレームでどれだけ回転したかを計算する
+            // (現在の親の回転) * (前の親の回転の逆) = 差分の回転
+            Quaternion parentRotationDelta = transform.rotation * Quaternion.Inverse(lastParentRotation);
+
+            // 2. 砲塔の現在の回転に、親の回転差分の「逆」を掛けることで、親の回転を打ち消す
+            // これにより、砲塔はワールド空間で同じ向きを保とうとする
+            m_TurretTransform.rotation = Quaternion.Inverse(parentRotationDelta) * m_TurretTransform.rotation;
+
+            // 3. 次のフレームのために、現在の親の回転を保存する
+            lastParentRotation = transform.rotation;
         }
 
         private void EngineAudio(bool isMoving)

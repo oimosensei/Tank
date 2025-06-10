@@ -102,6 +102,7 @@ namespace Nakatani
             {
                 m_Fired = true;
                 IsCharging.Value = false;
+                //TODO Onfire経由するのぜったいいらん
                 OnFire.OnNext(Unit.Default);
                 CurrentLaunchForce.Value = m_MinLaunchForce;
             }

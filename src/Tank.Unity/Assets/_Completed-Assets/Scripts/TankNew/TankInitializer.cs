@@ -29,6 +29,18 @@ namespace Nakatani
         {
         }
 
+        [ContextMenu("Setup Self")]
+        private void SetupSelf()
+        {
+            Setup(true);
+        }
+
+        [ContextMenu("Setup Other")]
+        private void SetupOther()
+        {
+            Setup(false);
+        }
+
         public void Setup(bool isSelf)
         {
             //networkから生成されたものかどうか
