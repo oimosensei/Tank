@@ -51,10 +51,14 @@ namespace Nakatani
             // 射撃入力の状態を更新（自分のタンクの場合のみ）
             if (m_Model.isSelf)
             {
-                IsFireButtonDown.Value = Input.GetButtonDown(m_FireButton);
+                // IsFireButtonDown.Value = Input.GetButtonDown(m_FireButton);
+                // // ボタン押下状態を、値が変わっていなくても更新
+                // IsFireButtonHeld.SetValueAndForceNotify(Input.GetButton(m_FireButton));
+                // IsFireButtonUp.Value = Input.GetButtonUp(m_FireButton);
+                IsFireButtonDown.Value = Input.GetMouseButton(0);
                 // ボタン押下状態を、値が変わっていなくても更新
-                IsFireButtonHeld.SetValueAndForceNotify(Input.GetButton(m_FireButton));
-                IsFireButtonUp.Value = Input.GetButtonUp(m_FireButton);
+                IsFireButtonHeld.SetValueAndForceNotify(Input.GetMouseButton(0));
+                IsFireButtonUp.Value = Input.GetMouseButtonUp(0);
             }
             else
             {

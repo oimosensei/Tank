@@ -59,6 +59,7 @@ namespace Nakatani
             // InputControllerの最新の入力値を使って移動と回転
             Move(m_InputController.MovementInputValue.Value);
             Turn(m_InputController.TurnInputValue.Value);
+            //todo オフラインの時どうするか
             GameHubClient.Instance.MoveTank(transform.position, transform.rotation);
         }
 
