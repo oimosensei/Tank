@@ -51,6 +51,7 @@ namespace Nakatani
 
             if (m_TurretTransform == null) return;
 
+            //todo InputControllerに処理を預ける
             // マウスの左右移動を取得（水平回転）
             float mouseX = Input.GetAxis("Mouse X");
             // Y軸周りに回転
