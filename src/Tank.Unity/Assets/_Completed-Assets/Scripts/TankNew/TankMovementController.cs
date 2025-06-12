@@ -60,7 +60,7 @@ namespace Nakatani
             Move(m_InputController.MovementInputValue.Value);
             Turn(m_InputController.TurnInputValue.Value);
             //todo オフラインの時どうするか
-            GameHubClient.Instance.MoveTank(transform.position, transform.rotation);
+            GameHubClient.Instance.MoveTank(transform.position, transform.rotation, m_TurretTransform.rotation);
         }
 
         private void Move(float inputValue)

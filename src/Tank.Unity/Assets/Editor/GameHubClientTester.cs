@@ -69,7 +69,7 @@ public class GameHubClientTester : Editor
                     0,
                     UnityEngine.Random.Range(-10f, 10f)
                 );
-                gameHubClient.OnMove(playerId, testPosition, quaternion.identity);
+                gameHubClient.OnTankTransformUpdate(playerId, testPosition, quaternion.identity, quaternion.identity);
                 Debug.Log($"Called OnMove with ID: {playerId} to position: {testPosition}");
             }
             else

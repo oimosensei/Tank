@@ -31,7 +31,7 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
 
     public ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinAndSpawnAsync(Vector3 spawnPosition)
     {
-        var tankInfo = new TankInfo { Id = this.ConnectionId, Position = spawnPosition, Rotation = Quaternion.identity };
+        var tankInfo = new TankInfo { Id = this.ConnectionId, Position = spawnPosition, Rotation = Quaternion.identity, TurretRotation = Quaternion.identity };
         gameContext?.TankInfos.TryAdd(this.ConnectionId, tankInfo);
 
         var existingTanks = gameContext?.TankInfos.Values.Where(t => t.Id != this.ConnectionId).ToArray() ?? [];
@@ -51,7 +51,7 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         gameContext?.Group.All.OnAttack(this.ConnectionId, targetId);
         return default;
     }
-    public ValueTask MoveAsync(Guid playerId, Vector3 position, Quaternion rotation)
+    public ValueTask TankTransformUpdateAsync(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation)
     {
         // if (gameContextRepository.TryGet(Context.ContextId, out var context))
         // {
@@ -61,8 +61,9 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         {
             tankInfo.Position = position;
             tankInfo.Rotation = rotation;
+            tankInfo.TurretRotation = turretRotation;
         }
-        gameContext?.Group.Except([ConnectionId]).OnMove(playerId, position, rotation);
+        gameContext?.Group.Except([ConnectionId]).OnTankTransformUpdate(playerId, position, rotation, turretRotation);
         return default;
     }
 

@@ -47,7 +47,7 @@ namespace Nakatani
             }
 
             // カーソルがロックされている時のみ回転処理
-            if (!m_IsCursorLocked) return;
+            // if (!m_IsCursorLocked) return;
 
             if (m_TurretTransform == null) return;
 
@@ -110,10 +110,11 @@ namespace Nakatani
         // アプリケーションフォーカス時の処理
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && m_LockCursorOnStart && !m_IsCursorLocked)
+            if (hasFocus && !m_IsCursorLocked)
             {
                 LockCursor();
             }
         }
+
     }
 }

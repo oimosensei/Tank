@@ -62,17 +62,23 @@ namespace Nakatani
             shootingController.Initialize(inputController, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
 
             m_Instance.GetComponent<TankView>().Initialize(Model);
+
+            m_Instance.GetComponent<CameraSwitcher>().Initialize(isSelf);
             if (isSelf)
             {
                 var movementController = m_Instance.GetComponent<TankMovementController>();
                 movementController.Initialize(inputController);
 
                 m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
+
+                m_Instance.GetComponent<NetworkTurretController>().enabled = false;
             }
             else
             {
                 m_Instance.GetComponent<TankNetworkMovementController>().Initialize(Model);
                 m_Instance.GetComponent<TankMovementController>().enabled = false;
+                //タレットを回転させるコンポーネントをオフに
+                m_Instance.GetComponent<TurretRotator>().enabled = false;
             }
 
             // ModelのWinsプロパティを監視して、Managerのm_Winsを更新し続ける

@@ -15,6 +15,9 @@ public class TankInfo
     
     [Key(2)]
     public Quaternion Rotation { get; set; }
+    
+    [Key(3)]
+    public Quaternion TurretRotation { get; set; }
 }
 
 [MessagePackObject]
@@ -46,7 +49,7 @@ public interface IGameHub : IStreamingHub<IGameHub, IGameHubReceiver>
 {
     ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinAndSpawnAsync(Vector3 spawnPosition);
     ValueTask AttackAsync(Guid targetId);
-    ValueTask MoveAsync(Guid playerId, Vector3 position, Quaternion rotation);
+    ValueTask TankTransformUpdateAsync(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation);
     ValueTask ShootAsync(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce);
     ValueTask ShellUpdateAsync(Guid shellId, Vector3 position, Vector3 velocity);
     ValueTask ShellExplodeAsync(Guid shellId, Vector3 explosionPosition);
@@ -55,7 +58,7 @@ public interface IGameHub : IStreamingHub<IGameHub, IGameHubReceiver>
 public interface IGameHubReceiver
 {
     void OnAttack(Guid playerId, Guid targetId);
-    void OnMove(Guid playerId, Vector3 position, Quaternion rotation);
+    void OnTankTransformUpdate(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation);
     void OnPlayerJoined(Guid playerId, Vector3 position, bool isSelf);
     void OnPlayerLeft(Guid playerId);
     void OnShellFired(ShellInfo shellInfo);

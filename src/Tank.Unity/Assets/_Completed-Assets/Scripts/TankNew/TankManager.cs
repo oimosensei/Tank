@@ -138,12 +138,13 @@ namespace Nakatani
         }
 
         /// <summary>
-        /// GameHubのOnMoveから呼び出される関数
+        /// GameHubのOnTankTransformUpdateから呼び出される関数
         /// </summary>
         /// <param name="playerId">移動したプレイヤーのGuid</param>
         /// <param name="position">新しい位置</param>
         /// <param name="rotation">新しい回転</param>
-        public void OnTankMove(Guid playerId, Vector3 position, Quaternion rotation)
+        /// <param name="turretRotation">新しい砲塔回転</param>
+        public void OnTankTransformUpdate(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation)
         {
             if (tanks.TryGetValue(playerId, out GameObject tank))
             {
@@ -151,11 +152,19 @@ namespace Nakatani
                 // 例: tank.GetComponent<TankMovementController>()?.SetTargetPosition(position, rotation);
                 tank.transform.position = position;
                 tank.transform.rotation = rotation;
-                // Debug.Log($"Tank {playerId} moved to {position} with rotation {rotation}");
+                
+                // 砲塔の回転を更新
+                NetworkTurretController networkTurretController = tank.GetComponent<NetworkTurretController>();
+                if (networkTurretController != null)
+                {
+                    networkTurretController.SetTurretRotation(turretRotation);
+                }
+                
+                // Debug.Log($"Tank {playerId} moved to {position} with rotation {rotation}, turret rotation {turretRotation}");
             }
             else
             {
-                Debug.LogWarning($"Tank {playerId} not found for move operation");
+                Debug.LogWarning($"Tank {playerId} not found for transform update operation");
             }
         }
 

@@ -44,9 +44,9 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         }
     }
 
-    public void MoveTank(Vector3 position, Quaternion rotation)
+    public void MoveTank(Vector3 position, Quaternion rotation, Quaternion turretRotation)
     {
-        hubClient.MoveAsync(myConnectionId, position, rotation);
+        hubClient.TankTransformUpdateAsync(myConnectionId, position, rotation, turretRotation);
     }
 
     public void ShootShell(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce)
@@ -127,17 +127,17 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         // TODO: 攻撃エフェクトの生成やサウンド再生などをここに追加
     }
 
-    public void OnMove(Guid playerId, Vector3 position, Quaternion rotation)
+    public void OnTankTransformUpdate(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation)
     {
-        // Debug.Log($"[GameHubClient] OnMove: Player {playerId} moved to {position} with rotation {rotation}");
+        // Debug.Log($"[GameHubClient] OnTankTransformUpdate: Player {playerId} moved to {position} with rotation {rotation}, turret rotation {turretRotation}");
 
         if (Nakatani.TankManager.Instance != null)
         {
-            Nakatani.TankManager.Instance.OnTankMove(playerId, position, rotation);
+            Nakatani.TankManager.Instance.OnTankTransformUpdate(playerId, position, rotation, turretRotation);
         }
         else
         {
-            Debug.LogError("Nakatani.TankManager.Instance is null in OnMove");
+            Debug.LogError("Nakatani.TankManager.Instance is null in OnTankTransformUpdate");
         }
     }
 
@@ -174,7 +174,7 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
     {
         if (hubClient != null)
         {
-            await hubClient.MoveAsync(myConnectionId, position, rotation);
+            await hubClient.TankTransformUpdateAsync(myConnectionId, position, rotation, Quaternion.identity);
             Debug.Log($"Sent move command to position: {position} with rotation: {rotation}");
         }
         else
