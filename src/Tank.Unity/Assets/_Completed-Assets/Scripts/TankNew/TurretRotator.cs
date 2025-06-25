@@ -20,8 +20,11 @@ namespace Nakatani
         private float m_InitialVerticalAngle;
         private bool m_IsCursorLocked = false;
 
-        private void Start()
+        public void Initialize(GameConstants gameConstants)
         {
+            // GameConstantsから設定値を取得
+            m_RotationSpeed = gameConstants.TurretRotationSensitivity;
+            
             // 初期の垂直角度を保存
             if (m_BarrelTransform != null)
             {
@@ -35,6 +38,15 @@ namespace Nakatani
             if (m_LockCursorOnStart)
             {
                 LockCursor();
+            }
+        }
+
+        private void Start()
+        {
+            // 初期化が呼ばれていない場合のフォールバック
+            if (m_RotationSpeed == 50f) // デフォルト値のまま
+            {
+                Debug.LogWarning("TurretRotator: Initialize() was not called. Using default values.");
             }
         }
 

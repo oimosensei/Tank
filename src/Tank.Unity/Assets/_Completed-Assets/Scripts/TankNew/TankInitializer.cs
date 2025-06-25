@@ -19,11 +19,8 @@ namespace Nakatani
 
         public TankModel Model { get; private set; }
 
-        [Header("Tank Properties")]
-        public float m_StartingHealth = 100f;
-        public float m_MinLaunchForce = 15f;
-        public float m_MaxLaunchForce = 30f;
-        public float m_MaxChargeTime = 0.75f;
+        [Header("Game Constants")]
+        public GameConstants gameConstants;
 
         void Awake()
         {
@@ -43,10 +40,16 @@ namespace Nakatani
 
         public void Setup(bool isSelf)
         {
+            if (gameConstants == null)
+            {
+                Debug.LogError("GameConstants is not assigned in TankInitializer!");
+                return;
+            }
+            
             //networkから生成されたものかどうか
             this.isSelf = isSelf;
             // Modelを生成
-            Model = new TankModel(m_PlayerNumber, m_PlayerColor, m_StartingHealth);
+            Model = new TankModel(m_PlayerNumber, m_PlayerColor, gameConstants.StartingHealth);
             Model.isSelf = isSelf;
             Model.Wins.Value = m_Wins;
             m_ColoredPlayerText = Model.ColoredPlayerText.Value; // 初期値を取得
@@ -59,7 +62,7 @@ namespace Nakatani
             inputController.Initialize(Model);
 
             var shootingController = m_Instance.GetComponent<TankShootingController>();
-            shootingController.Initialize(inputController, m_MinLaunchForce, m_MaxLaunchForce, m_MaxChargeTime);
+            shootingController.Initialize(inputController, gameConstants);
 
             m_Instance.GetComponent<TankView>().Initialize(Model);
 
@@ -67,7 +70,10 @@ namespace Nakatani
             if (isSelf)
             {
                 var movementController = m_Instance.GetComponent<TankMovementController>();
-                movementController.Initialize(inputController);
+                movementController.Initialize(inputController, gameConstants);
+
+                var turretRotator = m_Instance.GetComponent<TurretRotator>();
+                turretRotator.Initialize(gameConstants);
 
                 m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
 

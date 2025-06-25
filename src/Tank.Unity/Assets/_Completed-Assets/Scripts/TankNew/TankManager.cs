@@ -10,21 +10,6 @@ namespace Nakatani
         [SerializeField]
         private GameObject tankPrefab; // 通常のタンクPrefab
 
-        [Header("Tank Settings")]
-        [SerializeField]
-        private Color[] playerColors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow };
-
-        [SerializeField]
-        private int startingHealth = 100;
-
-        [SerializeField]
-        private float minLaunchForce = 15f;
-
-        [SerializeField]
-        private float maxLaunchForce = 30f;
-
-        [SerializeField]
-        private float maxChargeTime = 0.75f;
 
         // 場に出ているタンクを管理するディクショナリー
         [SerializeField]
@@ -75,18 +60,6 @@ namespace Nakatani
             TankInitializer tankInitializer = newTank.GetComponent<TankInitializer>();
             if (tankInitializer != null)
             {
-                // // プレイヤー色を設定（プレイヤー番号に基づいて）
-                // Color playerColor = playerColors[playerNumber % playerColors.Length];
-
-                // // TankInitializerのパラメータを設定
-                // tankInitializer.m_PlayerNumber = playerNumber;
-                // tankInitializer.m_PlayerColor = playerColor;
-                // tankInitializer.m_StartingHealth = startingHealth;
-                // tankInitializer.m_MinLaunchForce = minLaunchForce;
-                // tankInitializer.m_MaxLaunchForce = maxLaunchForce;
-                // tankInitializer.m_MaxChargeTime = maxChargeTime;
-                // tankInitializer.isSelf = isSelf;
-
                 // 初期化を実行
                 tankInitializer.Setup(isSelf);
             }

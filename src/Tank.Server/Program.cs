@@ -3,6 +3,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddMagicOnion();
 builder.Services.AddSingleton<GameContextRepository>();
+builder.Services.AddSingleton<MatchingHub>();
 
 var app = builder.Build();
 
@@ -22,11 +23,11 @@ catch (System.Reflection.TargetInvocationException tie)
         Console.WriteLine($"Message: {innerEx.Message}");
         Console.WriteLine($"StackTrace: {innerEx.StackTrace}");
         Console.WriteLine("--- End Inner Exception ---");
-        innerEx = innerEx.InnerException; // ‚³‚ç‚É“à‘¤‚Ì—áŠO‚ª‚ ‚ê‚Î•\¦
+        innerEx = innerEx.InnerException; // ï¿½ï¿½ï¿½ï¿½É“ï¿½ï¿½ï¿½ï¿½Ì—ï¿½Oï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î•\ï¿½ï¿½
     }
-    throw; // ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ğ’â~‚³‚¹‚é‚½‚ß‚ÉÄƒXƒ[
+    throw; // ï¿½Aï¿½vï¿½ï¿½ï¿½Pï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½~ï¿½ï¿½ï¿½ï¿½ï¿½é‚½ï¿½ß‚ÉÄƒXï¿½ï¿½ï¿½[
 }
-catch (Exception ex) // ‚»‚Ì‘¼‚Ì—\Šú‚¹‚Ê—áŠO
+catch (Exception ex) // ï¿½ï¿½ï¿½Ì‘ï¿½ï¿½Ì—\ï¿½ï¿½ï¿½ï¿½ï¿½Ê—ï¿½O
 {
     Console.WriteLine($"An unexpected exception occurred: {ex.GetType().FullName}");
     Console.WriteLine($"Message: {ex.Message}");

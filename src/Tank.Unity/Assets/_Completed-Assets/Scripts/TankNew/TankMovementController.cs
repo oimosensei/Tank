@@ -23,12 +23,16 @@ namespace Nakatani
         private Transform m_TurretTransform;
         private Quaternion lastParentRotation; // 親オブジェクト（車体）の前フレームでの回転を保存
 
-        public void Initialize(TankInputController inputController)
+        public void Initialize(TankInputController inputController, GameConstants gameConstants)
         {
             m_InputController = inputController;
             m_Rigidbody = GetComponent<Rigidbody>();
             m_OriginalPitch = m_MovementAudio.pitch;
             m_particleSystems = GetComponentsInChildren<ParticleSystem>();
+            
+            // GameConstantsから設定値を取得
+            m_Speed = gameConstants.TankSpeed;
+            m_TurnSpeed = gameConstants.TankTurnSpeed;
 
             // 移動入力があったかどうかを監視するストリームを作成
             m_InputController.MovementInputValue

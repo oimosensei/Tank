@@ -5,6 +5,7 @@ using UnityEngine;
 public class GameContext : IDisposable
 {
     public Guid Id { get; }
+    public string RoomName { get; set; }
     public bool IsCompleted { get; set; }
     // public ConcurrentQueue<ICommand> CommandQueue { get; } = new();
     public IMulticastSyncGroup<Guid, IGameHubReceiver> Group { get; }
@@ -65,5 +66,10 @@ public class GameContextRepository
         {
             context.Dispose();
         }
+    }
+
+    public System.Collections.Generic.IEnumerable<GameContext> GetAll()
+    {
+        return _contexts.Values;
     }
 }

@@ -8,12 +8,17 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
     private GameContext? gameContext;
     protected override ValueTask OnConnected()
     {
-        if (gameContextRepository.TryGet(Guid.Empty, out var context))
+        return default;
+    }
+
+    public ValueTask JoinRoomAsync(Guid roomId)
+    {
+        if (gameContextRepository.TryGet(roomId, out var context))
         {
             gameContext = context;
             context.Group.Add(this.ConnectionId, Client);
             //ログ
-            Console.WriteLine($"Connected: {this.ConnectionId}");
+            Console.WriteLine($"Player {this.ConnectionId} joined room {roomId}");
         }
         return default;
     }

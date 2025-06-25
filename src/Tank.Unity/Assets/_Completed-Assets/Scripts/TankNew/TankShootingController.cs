@@ -29,12 +29,12 @@ namespace Nakatani
         public float MinLaunchForce => m_MinLaunchForce;
         public float MaxLaunchForce => m_MaxLaunchForce;
 
-        public void Initialize(TankInputController inputController, float minLaunchForce, float maxLaunchForce, float maxChargeTime)
+        public void Initialize(TankInputController inputController, GameConstants gameConstants)
         {
             // 発射設定の初期化
-            m_MinLaunchForce = minLaunchForce;
-            m_MaxLaunchForce = maxLaunchForce;
-            m_ChargeSpeed = (m_MaxLaunchForce - m_MinLaunchForce) / maxChargeTime;
+            m_MinLaunchForce = gameConstants.MinLaunchForce;
+            m_MaxLaunchForce = gameConstants.MaxLaunchForce;
+            m_ChargeSpeed = (m_MaxLaunchForce - m_MinLaunchForce) / gameConstants.MaxChargeTime;
             CurrentLaunchForce.Value = m_MinLaunchForce; // 既存のインスタンスの値を更新
 
             // InputControllerからの入力を監視して発射管理

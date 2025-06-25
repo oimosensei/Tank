@@ -47,6 +47,7 @@ public class ShellInfo
 
 public interface IGameHub : IStreamingHub<IGameHub, IGameHubReceiver>
 {
+    ValueTask JoinRoomAsync(Guid roomId);
     ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinAndSpawnAsync(Vector3 spawnPosition);
     ValueTask AttackAsync(Guid targetId);
     ValueTask TankTransformUpdateAsync(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation);

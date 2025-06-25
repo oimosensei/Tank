@@ -22,7 +22,7 @@ namespace Nakatani
         private CameraMode m_CurrentCameraMode = CameraMode.TPS;
         private bool isLocal = true;
 
-        private void Start()
+        private void Awake()
         {
             // 初期状態はTPSカメラをアクティブに
             SetCameraMode(CameraMode.TPS);
