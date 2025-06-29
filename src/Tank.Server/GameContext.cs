@@ -35,6 +35,8 @@ public class GameContextRepository
     public GameContextRepository(IMulticastGroupProvider groupProvider)
     {
         _groupProvider = groupProvider;
+
+        // デフォルトのルームをGuid.Emptyで作成
         var context = new GameContext(groupProvider);
         // var loopTask = GameLoop.RunLoopAsync(context);
         _contexts[Guid.Empty] = context;

@@ -11,16 +11,20 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         return default;
     }
 
-    public ValueTask JoinRoomAsync(Guid roomId)
+    public ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinRoomAsync(Guid roomId)
     {
         if (gameContextRepository.TryGet(roomId, out var context))
         {
             gameContext = context;
             context.Group.Add(this.ConnectionId, Client);
-            //ログ
+
+            var existingTanks = context.TankInfos.Values.ToArray();
             Console.WriteLine($"Player {this.ConnectionId} joined room {roomId}");
+            
+            return ValueTask.FromResult((existingTanks, this.ConnectionId));
         }
-        return default;
+        
+        return ValueTask.FromResult((new TankInfo[0], this.ConnectionId));
     }
 
 
@@ -34,17 +38,15 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         return default;
     }
 
-    public ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinAndSpawnAsync(Vector3 spawnPosition)
+    public ValueTask SpawnTankSelfAsync(Vector3 spawnPosition)
     {
         var tankInfo = new TankInfo { Id = this.ConnectionId, Position = spawnPosition, Rotation = Quaternion.identity, TurretRotation = Quaternion.identity };
         gameContext?.TankInfos.TryAdd(this.ConnectionId, tankInfo);
 
-        var existingTanks = gameContext?.TankInfos.Values.Where(t => t.Id != this.ConnectionId).ToArray() ?? [];
-
         gameContext?.Group.Except([this.ConnectionId]).OnPlayerJoined(this.ConnectionId, spawnPosition, false);
         gameContext?.Group.Single(this.ConnectionId).OnPlayerJoined(this.ConnectionId, spawnPosition, true);
 
-        return ValueTask.FromResult((existingTanks, this.ConnectionId));
+        return default;
     }
 
     public ValueTask AttackAsync(Guid targetId)
@@ -88,7 +90,7 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
 
         gameContext?.ShellInfos.TryAdd(shellId, shellInfo);
         gameContext?.Group.All.OnShellFired(shellInfo);
-        
+
         Console.WriteLine($"Shell fired by {this.ConnectionId}: {shellId} at {firePosition} with velocity {velocity}");
         return default;
     }
@@ -101,7 +103,7 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
             shellInfo.Velocity = velocity;
             shellInfo.Timestamp = (float)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
         }
-        
+
         gameContext?.Group.All.OnShellUpdate(shellId, position, velocity);
         return default;
     }
@@ -113,7 +115,7 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         {
             shooterId = shellInfo.ShooterId;
         }
-        
+
         gameContext?.Group.All.OnShellExplode(shellId, explosionPosition, shooterId);
         Console.WriteLine($"Shell exploded: {shellId} at {explosionPosition}, shot by {shooterId}");
         return default;

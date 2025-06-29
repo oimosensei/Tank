@@ -9,13 +9,13 @@ public class TankInfo
 {
     [Key(0)]
     public Guid Id { get; set; }
-    
+
     [Key(1)]
     public Vector3 Position { get; set; }
-    
+
     [Key(2)]
     public Quaternion Rotation { get; set; }
-    
+
     [Key(3)]
     public Quaternion TurretRotation { get; set; }
 }
@@ -25,30 +25,30 @@ public class ShellInfo
 {
     [Key(0)]
     public Guid Id { get; set; }
-    
+
     [Key(1)]
     public Guid ShooterId { get; set; }
-    
+
     [Key(2)]
     public Vector3 Position { get; set; }
-    
+
     [Key(3)]
     public Vector3 Velocity { get; set; }
-    
+
     [Key(4)]
     public Quaternion Rotation { get; set; }
-    
+
     [Key(5)]
     public float LaunchForce { get; set; }
-    
+
     [Key(6)]
     public float Timestamp { get; set; }
 }
 
 public interface IGameHub : IStreamingHub<IGameHub, IGameHubReceiver>
 {
-    ValueTask JoinRoomAsync(Guid roomId);
-    ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinAndSpawnAsync(Vector3 spawnPosition);
+    ValueTask<(TankInfo[] existingTanks, Guid connectionId)> JoinRoomAsync(Guid roomId);
+    ValueTask SpawnTankSelfAsync(Vector3 spawnPosition);
     ValueTask AttackAsync(Guid targetId);
     ValueTask TankTransformUpdateAsync(Guid playerId, Vector3 position, Quaternion rotation, Quaternion turretRotation);
     ValueTask ShootAsync(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce);

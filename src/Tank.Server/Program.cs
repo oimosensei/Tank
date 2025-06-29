@@ -3,7 +3,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddMagicOnion();
 builder.Services.AddSingleton<GameContextRepository>();
-builder.Services.AddSingleton<MatchingHub>();
+// builder.Services.AddSingleton<MatchingHub>();
 
 var app = builder.Build();
 

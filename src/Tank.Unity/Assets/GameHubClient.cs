@@ -22,25 +22,21 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         channel = GrpcChannelx.ForAddress("http://localhost:5127");
         hubClient = await StreamingHubClient.ConnectAsync<IGameHub, IGameHubReceiver>(
             channel, this);
-
         Debug.Log("Connected to GameHub server");
+
+        // Generate random spawn position and join room
         float randomX = UnityEngine.Random.Range(-10f, 10f);
         float randomZ = UnityEngine.Random.Range(-10f, 10f);
 
-        var (existingTanks, connectionId) = await hubClient.JoinAndSpawnAsync(new Vector3(randomX, 0, randomZ));
-        myConnectionId = connectionId;
-
-        // Spawn all existing tanks
-        if (Nakatani.TankManager.Instance != null)
+        // Check if there's a current room to join
+        var currentRoom = Nakatani.Matching.CurrentRoomInfo.Instance.RoomInfo;
+        if (currentRoom != null)
         {
-            foreach (var tankInfo in existingTanks)
-            {
-                if (tankInfo.Id != System.Guid.Empty) // Skip empty guid
-                {
-                    Debug.Log($"Spawning existing tank: {tankInfo.Id} at {tankInfo.Position} with rotation {tankInfo.Rotation}");
-                    Nakatani.TankManager.Instance.SpawnTank(tankInfo.Id, tankInfo.Position, tankInfo.Rotation, false, 1);
-                }
-            }
+            JoinGame(currentRoom.RoomId, new Vector3(randomX, 0, randomZ));
+        }
+        else
+        {
+            JoinGameDefaultRoom(new Vector3(randomX, 0, randomZ));
         }
     }
 
@@ -183,14 +179,15 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
         }
     }
 
-    // Helper method to join the game
-    public async void JoinGame(Vector3 spawnPosition)
+    // Helper method to join a specific room and spawn tank
+    public async void JoinGame(Guid roomId, Vector3 spawnPosition)
     {
         if (hubClient != null)
         {
-            var (existingTanks, connectionId) = await hubClient.JoinAndSpawnAsync(spawnPosition);
+            // Join room first
+            var (existingTanks, connectionId) = await hubClient.JoinRoomAsync(roomId);
             myConnectionId = connectionId;
-            Debug.Log($"Joined game at position: {spawnPosition}");
+            Debug.Log($"Joined room {roomId} with connection ID: {connectionId}");
 
             // Spawn all existing tanks
             if (Nakatani.TankManager.Instance != null)
@@ -204,11 +201,21 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
                     }
                 }
             }
+
+            // Then spawn self tank
+            await hubClient.SpawnTankSelfAsync(spawnPosition);
+            Debug.Log($"Spawned self tank at position: {spawnPosition}");
         }
         else
         {
             Debug.LogError("Hub client is not connected");
         }
+    }
+
+    // Join default room (Guid.Empty)
+    public async void JoinGameDefaultRoom(Vector3 spawnPosition)
+    {
+        JoinGame(Guid.Empty, spawnPosition);
     }
 
     // Shell event handlers
