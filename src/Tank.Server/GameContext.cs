@@ -11,6 +11,19 @@ public class GameContext : IDisposable
     public IMulticastSyncGroup<Guid, IGameHubReceiver> Group { get; }
     public ConcurrentDictionary<Guid, TankInfo> TankInfos { get; } = new();
     public ConcurrentDictionary<Guid, ShellInfo> ShellInfos { get; } = new();
+    public ConcurrentDictionary<Guid, string> Players { get; } = new();
+
+    public void AddPlayer(Guid playerId, string connectionId)
+    {
+        Players[playerId] = connectionId;
+    }
+
+    public void RemovePlayer(Guid playerId)
+    {
+        Players.TryRemove(playerId, out _);
+    }
+
+    public Guid[] GetAllPlayerIds() => Players.Keys.ToArray();
 
     public GameContext(IMulticastGroupProvider groupProvider)
     {

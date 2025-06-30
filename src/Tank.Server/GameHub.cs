@@ -17,13 +17,14 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
         {
             gameContext = context;
             context.Group.Add(this.ConnectionId, Client);
+            context.AddPlayer(this.ConnectionId, this.ConnectionId.ToString());
 
             var existingTanks = context.TankInfos.Values.ToArray();
             Console.WriteLine($"Player {this.ConnectionId} joined room {roomId}");
-            
+
             return ValueTask.FromResult((existingTanks, this.ConnectionId));
         }
-        
+
         return ValueTask.FromResult((new TankInfo[0], this.ConnectionId));
     }
 
@@ -32,10 +33,17 @@ public class GameHub(GameContextRepository gameContextRepository) : StreamingHub
     {
         gameContext?.Group.Remove(this.ConnectionId);
         gameContext?.TankInfos.TryRemove(this.ConnectionId, out _);
+        gameContext?.RemovePlayer(this.ConnectionId);
         gameContext?.Group.All.OnPlayerLeft(this.ConnectionId);
         //ログを出す
         Console.WriteLine($"Disconnected: {this.ConnectionId}");
         return default;
+    }
+
+    public ValueTask<Guid[]> GetRoomMembersAsync()
+    {
+        var members = gameContext?.GetAllPlayerIds() ?? new Guid[0];
+        return ValueTask.FromResult(members);
     }
 
     public ValueTask SpawnTankSelfAsync(Vector3 spawnPosition)

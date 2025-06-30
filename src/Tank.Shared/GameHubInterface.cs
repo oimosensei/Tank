@@ -54,6 +54,7 @@ public interface IGameHub : IStreamingHub<IGameHub, IGameHubReceiver>
     ValueTask ShootAsync(Vector3 firePosition, Vector3 velocity, Quaternion rotation, float launchForce);
     ValueTask ShellUpdateAsync(Guid shellId, Vector3 position, Vector3 velocity);
     ValueTask ShellExplodeAsync(Guid shellId, Vector3 explosionPosition);
+    ValueTask<Guid[]> GetRoomMembersAsync();
 }
 
 public interface IGameHubReceiver
