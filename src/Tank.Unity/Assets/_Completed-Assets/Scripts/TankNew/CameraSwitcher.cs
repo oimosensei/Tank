@@ -119,5 +119,18 @@ namespace Nakatani
                     return null;
             }
         }
+
+        // 観戦用：カメラの有効/無効を切り替え
+        public void SetCameraMode(bool enable)
+        {
+            if (enable)
+            {
+                SetCameraMode(CameraMode.TPS);
+            }
+            else
+            {
+                SetCameraMode(CameraMode.None);
+            }
+        }
     }
 }

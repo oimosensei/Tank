@@ -13,7 +13,7 @@ namespace Nakatani
 
         // 場に出ているタンクを管理するディクショナリー
         [SerializeField]
-        private Dictionary<Guid, GameObject> tanks = new Dictionary<Guid, GameObject>();
+        public Dictionary<Guid, GameObject> tanks = new Dictionary<Guid, GameObject>();
 
         // シングルトンインスタンス
         public static TankManager Instance { get; private set; }
@@ -125,14 +125,14 @@ namespace Nakatani
                 // 例: tank.GetComponent<TankMovementController>()?.SetTargetPosition(position, rotation);
                 tank.transform.position = position;
                 tank.transform.rotation = rotation;
-                
+
                 // 砲塔の回転を更新
                 NetworkTurretController networkTurretController = tank.GetComponent<NetworkTurretController>();
                 if (networkTurretController != null)
                 {
                     networkTurretController.SetTurretRotation(turretRotation);
                 }
-                
+
                 // Debug.Log($"Tank {playerId} moved to {position} with rotation {rotation}, turret rotation {turretRotation}");
             }
             else

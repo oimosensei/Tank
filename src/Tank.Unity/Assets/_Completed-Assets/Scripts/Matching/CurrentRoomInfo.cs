@@ -5,9 +5,9 @@ namespace Nakatani.Matching
     public class CurrentRoomInfo : MonoBehaviour
     {
         private static CurrentRoomInfo _instance;
-        public static CurrentRoomInfo Instance 
-        { 
-            get 
+        public static CurrentRoomInfo Instance
+        {
+            get
             {
                 if (_instance == null)
                 {
@@ -20,6 +20,8 @@ namespace Nakatani.Matching
         }
 
         public RoomInfo RoomInfo { get; set; }
+
+        public bool StartWithSpectating { get; set; }
 
         void Awake()
         {

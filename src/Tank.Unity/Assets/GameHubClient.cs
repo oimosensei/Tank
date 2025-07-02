@@ -30,13 +30,15 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
 
         // Check if there's a current room to join
         var currentRoom = Nakatani.Matching.CurrentRoomInfo.Instance.RoomInfo;
+        var isSpectating = Nakatani.Matching.CurrentRoomInfo.Instance.StartWithSpectating;
+        //感染するかどうかの処理は関数の中で
         if (currentRoom != null)
         {
-            JoinGame(currentRoom.RoomId, new Vector3(randomX, 0, randomZ));
+            JoinGame(currentRoom.RoomId, new Vector3(randomX, 0, randomZ), isSpectating);
         }
         else
         {
-            JoinGameDefaultRoom(new Vector3(randomX, 0, randomZ));
+            JoinGameDefaultRoom(new Vector3(randomX, 0, randomZ), isSpectating);
         }
     }
 
@@ -180,7 +182,7 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
     }
 
     // Helper method to join a specific room and spawn tank
-    public async void JoinGame(Guid roomId, Vector3 spawnPosition)
+    public async void JoinGame(Guid roomId, Vector3 spawnPosition, bool isSpectating)
     {
         if (hubClient != null)
         {
@@ -202,9 +204,18 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
                 }
             }
 
-            // Then spawn self tank
-            await hubClient.SpawnTankSelfAsync(spawnPosition);
-            Debug.Log($"Spawned self tank at position: {spawnPosition}");
+            // Then spawn self tank or start spectating
+            if (isSpectating)
+            {
+                // Start spectating a random player
+                Nakatani.SpectateManager.Instance.StartSpectatingRandomPlayer();
+                Debug.Log("Started spectating mode");
+            }
+            else
+            {
+                await hubClient.SpawnTankSelfAsync(spawnPosition);
+                Debug.Log($"Spawned self tank at position: {spawnPosition}");
+            }
         }
         else
         {
@@ -213,9 +224,9 @@ public class GameHubClient : MonoBehaviour, IGameHubReceiver
     }
 
     // Join default room (Guid.Empty)
-    public async void JoinGameDefaultRoom(Vector3 spawnPosition)
+    public async void JoinGameDefaultRoom(Vector3 spawnPosition, bool isSpectating)
     {
-        JoinGame(Guid.Empty, spawnPosition);
+        JoinGame(Guid.Empty, spawnPosition, isSpectating);
     }
 
     // Shell event handlers

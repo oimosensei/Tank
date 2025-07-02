@@ -10,10 +10,15 @@ namespace Nakatani.Matching
     {
         [SerializeField] private TextMeshProUGUI roomNameText;
         [SerializeField] private Button joinButton;
+        [SerializeField] private Button spectateButton;
 
         private RoomInfo _currentRoomInfo;
 
         public IObservable<RoomInfo> OnJoinClicked => joinButton.OnClickAsObservable()
+            .Where(_ => _currentRoomInfo != null)
+            .Select(_ => _currentRoomInfo);
+
+        public IObservable<RoomInfo> OnSpectateClicked => spectateButton.OnClickAsObservable()
             .Where(_ => _currentRoomInfo != null)
             .Select(_ => _currentRoomInfo);
 

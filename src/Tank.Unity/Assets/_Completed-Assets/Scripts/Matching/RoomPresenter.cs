@@ -72,19 +72,26 @@ namespace Nakatani.Matching
                 viewInstance.SetText(roomInfo);
 
                 viewInstance.OnJoinClicked
-                    .Subscribe(room => OnRoomJoinClicked(room))
+                    .Subscribe(room => OnRoomJoinClicked(room, false))
+                    .AddTo(viewInstance);
+
+                viewInstance.OnSpectateClicked
+                    .Subscribe(room => OnRoomJoinClicked(room, true))
                     .AddTo(viewInstance);
 
                 _currentViews.Add(viewInstance);
             }
         }
 
-        private void OnRoomJoinClicked(RoomInfo roomInfo)
+        //観戦で入る場合も同じ関数が呼ばれる
+        private void OnRoomJoinClicked(RoomInfo roomInfo, bool isSpectating)
         {
-            Debug.Log($"Room join clicked: {roomInfo.RoomName} ({roomInfo.RoomId})");
+            Debug.Log($"Room {(isSpectating ? "spectate" : "join")} clicked: {roomInfo.RoomName} ({roomInfo.RoomId})");
 
             CurrentRoomInfo.Instance.RoomInfo = roomInfo;
+            CurrentRoomInfo.Instance.StartWithSpectating = isSpectating;
             SceneManager.LoadScene(GAME_SCENE_NAME);
         }
+
     }
 }
