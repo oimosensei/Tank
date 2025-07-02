@@ -24,7 +24,7 @@ namespace Nakatani
         {
             // GameConstantsから設定値を取得
             m_RotationSpeed = gameConstants.TurretRotationSensitivity;
-            
+
             // 初期の垂直角度を保存
             if (m_BarrelTransform != null)
             {
@@ -122,7 +122,7 @@ namespace Nakatani
         // アプリケーションフォーカス時の処理
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && !m_IsCursorLocked)
+            if (hasFocus && !m_IsCursorLocked && enabled)
             {
                 LockCursor();
             }
