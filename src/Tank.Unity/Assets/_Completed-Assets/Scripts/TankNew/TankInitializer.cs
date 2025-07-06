@@ -45,7 +45,7 @@ namespace Nakatani
                 Debug.LogError("GameConstants is not assigned in TankInitializer!");
                 return;
             }
-            
+
             //networkから生成されたものかどうか
             this.isSelf = isSelf;
             // Modelを生成
@@ -58,32 +58,54 @@ namespace Nakatani
             // 各コンポーネントにModelを注入して初期化
             // ここらへん、vcontainerとか使いたいが、、
 
+            // === 共通コンポーネント（自分・他人共通） ===
+            //ネットワークの時はいらない
             var inputController = m_Instance.GetComponent<TankInputController>();
             inputController.Initialize(Model);
 
+            //AIもこれを通じて射撃を行う
+            //networkの時はいらない
             var shootingController = m_Instance.GetComponent<TankShootingController>();
             shootingController.Initialize(inputController, gameConstants);
 
+            //viewはいる
             m_Instance.GetComponent<TankView>().Initialize(Model);
-
+            //ネットワークのときも、観戦のときに必要
             m_Instance.GetComponent<CameraSwitcher>().Initialize(isSelf);
+
+            // === 移動制御コンポーネント ===
             if (isSelf)
             {
+                // 自分のタンク：ローカル入力で制御
                 var movementController = m_Instance.GetComponent<TankMovementController>();
                 movementController.Initialize(inputController, gameConstants);
 
+                // ネットワーク制御は無効化
+                m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
+            }
+            else
+            {
+                // 他人のタンク：ネットワークデータで制御
+                m_Instance.GetComponent<TankNetworkMovementController>().Initialize(Model);
+
+                // ローカル制御は無効化
+                m_Instance.GetComponent<TankMovementController>().enabled = false;
+            }
+
+            // === タレット制御コンポーネント ===
+            if (isSelf)
+            {
+                // 自分のタンク：ローカル入力でタレット制御
                 var turretRotator = m_Instance.GetComponent<TurretRotator>();
                 turretRotator.Initialize(gameConstants);
 
-                m_Instance.GetComponent<TankNetworkMovementController>().enabled = false;
-
+                // ネットワークタレット制御は無効化
                 m_Instance.GetComponent<NetworkTurretController>().enabled = false;
             }
             else
             {
-                m_Instance.GetComponent<TankNetworkMovementController>().Initialize(Model);
-                m_Instance.GetComponent<TankMovementController>().enabled = false;
-                //タレットを回転させるコンポーネントをオフに
+                // 他人のタンク：ネットワークデータでタレット制御
+                // ローカルタレット制御は無効化
                 m_Instance.GetComponent<TurretRotator>().enabled = false;
             }
 
