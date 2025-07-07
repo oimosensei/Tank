@@ -36,15 +36,65 @@ public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
         Debug.Log("Connected to MatchingHub server");
     }
 
-    public async UniTask<RoomInfo> CreateRoom(string roomName)
+    public async UniTask<RoomInfo> CreateRoom(string roomName, int maxPlayers = 4)
     {
         if (hubClient != null)
         {
-            var roomInfo = await hubClient.CreateRoomAsync(roomName);
+            var roomInfo = await hubClient.CreateRoomAsync(roomName, maxPlayers);
             Debug.Log($"Created room: {roomInfo.RoomName} with ID: {roomInfo.RoomId}");
             return roomInfo;
         }
         return null;
+    }
+
+    public async UniTask<RoomInfo> JoinRoom(Guid roomId, string playerName)
+    {
+        if (hubClient != null)
+        {
+            var roomInfo = await hubClient.JoinRoomAsync(roomId, playerName);
+            Debug.Log($"Joined room: {roomInfo.RoomName} as {playerName}");
+            return roomInfo;
+        }
+        return null;
+    }
+
+    public async UniTask LeaveRoom(Guid roomId)
+    {
+        if (hubClient != null)
+        {
+            await hubClient.LeaveRoomAsync(roomId);
+            Debug.Log($"Left room: {roomId}");
+        }
+    }
+
+    public async UniTask<RoomInfo> StartGame(Guid roomId)
+    {
+        if (hubClient != null)
+        {
+            var roomInfo = await hubClient.StartGameAsync(roomId);
+            Debug.Log($"Started game in room: {roomInfo.RoomName}");
+            return roomInfo;
+        }
+        return null;
+    }
+
+    public async UniTask<RoomInfo> GetRoomStatus(Guid roomId)
+    {
+        if (hubClient != null)
+        {
+            var roomInfo = await hubClient.GetRoomStatusAsync(roomId);
+            return roomInfo;
+        }
+        return null;
+    }
+
+    public async UniTask SetReadyStatus(Guid roomId, bool isReady)
+    {
+        if (hubClient != null)
+        {
+            await hubClient.SetReadyStatusAsync(roomId, isReady);
+            Debug.Log($"Set ready status to {isReady} in room {roomId}");
+        }
     }
 
     public async UniTask<RoomInfo[]> GetRoomList()
@@ -85,9 +135,9 @@ public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
         Debug.Log($"[MatchingHubClient] OnRoomDeleted: Room {roomId}");
     }
 
-    public void OnPlayerJoinedRoom(Guid playerId, RoomInfo roomInfo)
+    public void OnPlayerJoinedRoom(PlayerInfo playerInfo, RoomInfo roomInfo)
     {
-        Debug.Log($"[MatchingHubClient] OnPlayerJoinedRoom: Player {playerId} joined room {roomInfo.RoomName}");
+        Debug.Log($"[MatchingHubClient] OnPlayerJoinedRoom: Player {playerInfo.PlayerName} ({playerInfo.PlayerId}) joined room {roomInfo.RoomName}");
     }
 
     public void OnPlayerLeftRoom(Guid playerId, RoomInfo roomInfo)
@@ -95,8 +145,21 @@ public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
         Debug.Log($"[MatchingHubClient] OnPlayerLeftRoom: Player {playerId} left room {roomInfo.RoomName}");
     }
 
-    public void OnGameStarted(Guid gameContextId)
+    public void OnPlayerReadyChanged(Guid playerId, bool isReady)
     {
-        Debug.Log($"[MatchingHubClient] OnGameStarted: Game started with context {gameContextId}");
+        Debug.Log($"[MatchingHubClient] OnPlayerReadyChanged: Player {playerId} set ready to {isReady}");
+    }
+
+    public void OnGameStarted(Guid gameContextId, RoomInfo roomInfo)
+    {
+        Debug.Log($"[MatchingHubClient] OnGameStarted: Game started in room {roomInfo.RoomName} with context {gameContextId}");
+        
+        // TODO: GameHubClientの接続処理をここで呼び出す
+        // GameHubClient.Instance?.ConnectToGameHub();
+    }
+
+    public void OnGameEnded(Guid roomId)
+    {
+        Debug.Log($"[MatchingHubClient] OnGameEnded: Game ended in room {roomId}");
     }
 }
