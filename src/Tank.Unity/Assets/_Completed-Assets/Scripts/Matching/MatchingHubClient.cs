@@ -6,6 +6,7 @@ using Grpc.Net.Client;
 using MagicOnion.Client;
 using MagicOnion;
 using Cysharp.Threading.Tasks;
+using Nakatani.Matching;
 
 public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
 {
@@ -138,11 +139,27 @@ public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
     public void OnPlayerJoinedRoom(PlayerInfo playerInfo, RoomInfo roomInfo)
     {
         Debug.Log($"[MatchingHubClient] OnPlayerJoinedRoom: Player {playerInfo.PlayerName} ({playerInfo.PlayerId}) joined room {roomInfo.RoomName}");
+
+        // RoomModelの現在のルーム情報を更新
+        var roomModel = RoomModel.Instance;
+        if (roomModel != null && roomModel.CurrentRoom.Value != null && roomModel.CurrentRoom.Value.RoomId == roomInfo.RoomId)
+        {
+            // 現在のルーム情報を最新の状態に更新
+            roomModel.RefreshCurrentRoom().Forget();
+        }
     }
 
     public void OnPlayerLeftRoom(Guid playerId, RoomInfo roomInfo)
     {
         Debug.Log($"[MatchingHubClient] OnPlayerLeftRoom: Player {playerId} left room {roomInfo.RoomName}");
+
+        // RoomModelの現在のルーム情報を更新
+        var roomModel = RoomModel.Instance;
+        if (roomModel != null && roomModel.CurrentRoom.Value != null && roomModel.CurrentRoom.Value.RoomId == roomInfo.RoomId)
+        {
+            // 現在のルーム情報を最新の状態に更新
+            roomModel.RefreshCurrentRoom().Forget();
+        }
     }
 
     public void OnPlayerReadyChanged(Guid playerId, bool isReady)
@@ -153,9 +170,11 @@ public class MatchingHubClient : MonoBehaviour, IMatchingHubReceiver
     public void OnGameStarted(Guid gameContextId, RoomInfo roomInfo)
     {
         Debug.Log($"[MatchingHubClient] OnGameStarted: Game started in room {roomInfo.RoomName} with context {gameContextId}");
-        
-        // TODO: GameHubClientの接続処理をここで呼び出す
-        // GameHubClient.Instance?.ConnectToGameHub();
+
+        // ゲームシーンに遷移
+        CurrentRoomInfo.Instance.RoomInfo = roomInfo;
+        CurrentRoomInfo.Instance.StartWithSpectating = false;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("_Complete-Game");
     }
 
     public void OnGameEnded(Guid roomId)

@@ -37,7 +37,7 @@ public class RoomInfo
     public string RoomName { get; set; } = string.Empty;
 
     [Key(2)]
-    public List<PlayerInfo> WaitingPlayers { get; set; } = new List<PlayerInfo>();
+    public List<PlayerInfo> Players { get; set; } = new List<PlayerInfo>();
 
     [Key(3)]
     public RoomStatus Status { get; set; } = RoomStatus.Waiting;
@@ -57,6 +57,7 @@ public interface IMatchingHub : IStreamingHub<IMatchingHub, IMatchingHubReceiver
     ValueTask LeaveRoomAsync(Guid roomId);
     ValueTask<RoomInfo> StartGameAsync(Guid roomId);
     ValueTask<RoomInfo> GetRoomInfoAsync(Guid roomId);
+    ValueTask<RoomInfo> GetRoomStatusAsync(Guid roomId);
     ValueTask SetReadyStatusAsync(Guid roomId, bool isReady);
 }
 

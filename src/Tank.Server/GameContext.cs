@@ -39,18 +39,18 @@ public class GameContext : IDisposable
         if (RoomInfo.Status == RoomStatus.Finished)
             return false;
 
-        if (RoomInfo.WaitingPlayers.Count >= RoomInfo.MaxPlayers)
+        if (RoomInfo.Players.Count >= RoomInfo.MaxPlayers)
             return false;
 
         // プレイヤーが既に参加していないかチェック
-        if (RoomInfo.WaitingPlayers.Any(p => p.PlayerId == playerId))
+        if (RoomInfo.Players.Any(p => p.PlayerId == playerId))
             return false;
 
         playerInfo = new PlayerInfo
         {
             PlayerId = playerId,
             PlayerName = playerName,
-            IsHost = RoomInfo.WaitingPlayers.Count == 0, // 最初のプレイヤーがホスト
+            IsHost = RoomInfo.Players.Count == 0, // 最初のプレイヤーがホスト
             IsReady = RoomInfo.Status == RoomStatus.Playing // プレイ中なら自動でReady状態
         };
 
@@ -60,23 +60,23 @@ public class GameContext : IDisposable
             RoomInfo.HostId = playerId;
         }
 
-        RoomInfo.WaitingPlayers.Add(playerInfo);
+        RoomInfo.Players.Add(playerInfo);
         return true;
     }
 
     public bool TryLeaveRoom(Guid playerId)
     {
 
-        var player = RoomInfo.WaitingPlayers.FirstOrDefault(p => p.PlayerId == playerId);
+        var player = RoomInfo.Players.FirstOrDefault(p => p.PlayerId == playerId);
         if (player == null)
             return false;
 
-        RoomInfo.WaitingPlayers.RemoveAll(p => p.PlayerId == playerId);
+        RoomInfo.Players.RemoveAll(p => p.PlayerId == playerId);
 
         // ホストが離脱した場合、次のプレイヤーをホストにする
-        if (player.IsHost && RoomInfo.WaitingPlayers.Count > 0)
+        if (player.IsHost && RoomInfo.Players.Count > 0)
         {
-            var newHost = RoomInfo.WaitingPlayers.First();
+            var newHost = RoomInfo.Players.First();
             newHost.IsHost = true;
             RoomInfo.HostId = newHost.PlayerId;
         }
@@ -96,7 +96,7 @@ public class GameContext : IDisposable
     public bool TrySetReady(Guid playerId, bool isReady)
     {
 
-        var player = RoomInfo.WaitingPlayers.FirstOrDefault(p => p.PlayerId == playerId);
+        var player = RoomInfo.Players.FirstOrDefault(p => p.PlayerId == playerId);
         if (player == null)
             return false;
 
@@ -104,7 +104,7 @@ public class GameContext : IDisposable
         return true;
     }
 
-    public bool IsEmpty => RoomInfo.WaitingPlayers.Count == 0;
+    public bool IsEmpty => RoomInfo.Players.Count == 0;
 
     // 通常のゲーム用コンストラクタ（ルーム名必須）
     public GameContext(IMulticastGroupProvider groupProvider, string roomName, int maxPlayers = 4)
@@ -120,7 +120,7 @@ public class GameContext : IDisposable
             RoomName = roomName,
             MaxPlayers = maxPlayers,
             Status = RoomStatus.Waiting,
-            WaitingPlayers = new List<PlayerInfo>()
+            Players = new List<PlayerInfo>()
         };
     }
 
@@ -138,7 +138,7 @@ public class GameContext : IDisposable
             RoomName = roomName,
             MaxPlayers = maxPlayers,
             Status = RoomStatus.Waiting,
-            WaitingPlayers = new List<PlayerInfo>()
+            Players = new List<PlayerInfo>()
         };
     }
 

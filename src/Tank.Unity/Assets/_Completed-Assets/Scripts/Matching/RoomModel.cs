@@ -24,6 +24,8 @@ namespace Nakatani.Matching
         public IReadOnlyReactiveProperty<bool> IsInRoom => _isInRoom;
 
         private MatchingHubClient _matchingClient;
+        private bool _isRefreshingCurrentRoom = false;
+        private string _currentPlayerName = string.Empty;
 
         void Awake()
         {
@@ -51,6 +53,9 @@ namespace Nakatani.Matching
             }
             
             RefreshRoomList().Forget();
+            
+            // 現在のルーム状態を定期的に更新
+            StartCurrentRoomRefreshLoop().Forget();
         }
 
         public async UniTask RefreshRoomList()
@@ -130,6 +135,7 @@ namespace Nakatani.Matching
                 {
                     _currentRoom.Value = joinedRoom;
                     _isInRoom.Value = true;
+                    _currentPlayerName = playerName; // 現在のプレイヤー名を保存
                     
                     // CurrentRoomInfoに保存
                     CurrentRoomInfo.Instance.RoomInfo = joinedRoom;
@@ -158,6 +164,7 @@ namespace Nakatani.Matching
                 
                 _currentRoom.Value = null;
                 _isInRoom.Value = false;
+                _currentPlayerName = string.Empty;
                 CurrentRoomInfo.Instance.RoomInfo = null;
                 
                 Debug.Log("Left room");
@@ -186,6 +193,14 @@ namespace Nakatani.Matching
                     CurrentRoomInfo.Instance.RoomInfo = updatedRoom;
                     
                     Debug.Log($"Game started in room: {updatedRoom.RoomName}");
+                    
+                    // ゲーム開始と同時にシーン遷移（ホスト用）
+                    if (updatedRoom.Status == RoomStatus.Playing)
+                    {
+                        Debug.Log("Host triggered game start. Transitioning to game scene...");
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("_Complete-Game");
+                    }
+                    
                     return true;
                 }
             }
@@ -217,24 +232,54 @@ namespace Nakatani.Matching
         // 現在のルーム情報を更新（リアルタイム更新用）
         public async UniTask RefreshCurrentRoom()
         {
-            if (_currentRoom.Value == null || _matchingClient == null)
+            if (_currentRoom.Value == null || _matchingClient == null || _isRefreshingCurrentRoom)
                 return;
 
+            _isRefreshingCurrentRoom = true;
             try
             {
                 var updatedRoom = await _matchingClient.GetRoomStatus(_currentRoom.Value.RoomId);
                 if (updatedRoom != null)
                 {
+                    var previousStatus = _currentRoom.Value.Status;
                     _currentRoom.Value = updatedRoom;
                     CurrentRoomInfo.Instance.RoomInfo = updatedRoom;
+                    
+                    // ゲーム開始を検知してシーン遷移
+                    if (previousStatus == RoomStatus.Waiting && updatedRoom.Status == RoomStatus.Playing)
+                    {
+                        Debug.Log("Game started detected! Transitioning to game scene...");
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("_Complete-Game");
+                    }
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError($"Failed to refresh current room: {e.Message}");
             }
+            finally
+            {
+                _isRefreshingCurrentRoom = false;
+            }
         }
 
+
+        // 現在のルーム情報を定期的に更新するループ
+        private async UniTask StartCurrentRoomRefreshLoop()
+        {
+            while (this != null)
+            {
+                await UniTask.Delay(2000); // 2秒ごとに更新
+                
+                if (_isInRoom.Value && _currentRoom.Value != null && !_isRefreshingCurrentRoom)
+                {
+                    await RefreshCurrentRoom();
+                }
+            }
+        }
+
+        // 現在のプレイヤー名を取得するメソッド
+        public string GetCurrentPlayerName() => _currentPlayerName;
 
         void OnDestroy()
         {
